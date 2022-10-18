@@ -61,6 +61,49 @@ async function executor(language, code, input) {
                 }
                 break;
             }
+        case "c++":
+            {
+                try {
+                    const result = await new Promise((resolve, reject) => {
+                        try {
+                            var process = execFile("g++", ["-x", "c++", filename, "-o", "executables/" + filename],
+                                async(error, stdout, stderr) => {
+                                    if (error) {
+                                        outputParams.status = "fail"
+                                        console.log(stderr)
+                                        resolve(error)
+                                    } else if (stderr) {
+                                        outputParams.status = "fail"
+                                        console.log(stderr)
+                                        resolve(stderr)
+                                    } else {
+                                        var codeOutput = await new Promise((res, rej) => {
+                                            output = execFile("./executables/" + filename, [], (err, stderror, stdoutput) => {
+                                                if (err || stderror) {
+                                                    outputParams.status = "fail"
+                                                    res(err || stderror)
+                                                } else {
+                                                    outputParams.status = "success"
+                                                    res(stdoutput)
+                                                }
+                                            })
+                                            output.stdin.write(input)
+                                            output.stdin.end()
+                                        })
+                                        resolve(codeOutput)
+                                    }
+                                })
+                        } catch (err) {
+                            outputParams.status = "fail"
+                        }
+                    })
+                    outputParams.stdout = result.toString();
+                } catch (err) {
+                    outputParams.status = "fail"
+                    console.log(err)
+                }
+                break;
+            }
         default:
             {
                 outputParams.status = "fail"
